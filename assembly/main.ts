@@ -93,7 +93,10 @@ export function pay(receiver: string, memo: string): PaymentResult {
 // view method
 export function getEvents(start: u32, length: u32): Array<EgressEvent> {
   assert(length <= GET_EVENT_LIMIT, "length out of range");
-  let numEvents = min(egressQueue.length, length);
+  if (start >= (egressQueue.length as u32)) {
+    return new Array<EgressEvent>();
+  }
+  let numEvents = min(egressQueue.length - start, length);
   let startIndex = start;
   let result = Array.create<EgressEvent>(numEvents);
   for (let i = 0; i < numEvents; i++) {
