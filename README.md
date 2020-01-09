@@ -1,10 +1,10 @@
-# NEAR Guest Book
+# Phala-NEAR Bridge
 
-Implements simple guest book with NEAR DevNet wallet integration.
+Deadly simple cross-chain bridge between Phala.Network and NEAR Protocol. This enables Confidential
+Smart Contract provided by Phala.Network for NEAR Protocol.
 
-To checkout out wallet go to: http://wallet.nearprotocol.com
+## The bridge contract
 
-See: 
 - `assembly/main.ts` for contract code
 - `assembly/model.ts` for data structures
 - `src/main.js` for wallet integration and contract use with `nearlib`
@@ -20,3 +20,7 @@ yarn
 yarn build
 yarn deploy -- --contract guestbook
 ```
+
+## The bridge deamon:
+
+- `bridge/index.js`
