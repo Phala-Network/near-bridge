@@ -12,6 +12,7 @@
     "test": "npm run build && jest test --env=near-shell/test_environment"
   },
   "dependencies": {
+    "@polkadot/api": "^0.99.1",
     "near-bindgen-as": "^1.1.1",
     "near-runtime-ts": "^0.5.1",
     "nearlib": "^0.19.2"

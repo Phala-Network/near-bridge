@@ -1,5 +1,14 @@
 const nearlib = require('nearlib');
 
+const { ApiPromise } = require('@polkadot/api');
+const testKeyring = require('@polkadot/keyring/testing');
+
+const bn = require('bn.js');
+
+//
+// NEAR Setup
+//
+
 const CONTRACT_NAME = 'studio-9c7dtmgna';
 const NEAR_BRIDGE_ACCOUNT = 'phalabridgetest';
 const NEAR_BRIDGE_PRIVKEY = 'ed25519:hUoob5FLWYcYnMZqWHYXkBHc7dZrLu8tiqazTzBuAB7qj9QHnCoPKvmwE9CVcu9SQ6McA7RpnwsXPL4rZ9sKRHu';
@@ -30,17 +39,44 @@ async function initNear () {
   return { near, walletAccount, accountId, contract };
 }
 
-async function initPhala () {
-  return {
+//
+// Phala Setup
+//
 
-  };
+const ALICE = '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY';
+const BOB = '5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty';
+
+async function initPhala () {
+  const api = await ApiPromise.create();
+  const keyring = testKeyring.default();
+  const alicePair = keyring.getPair(ALICE);
+  return { api, keyring, alicePair };
 }
+
+// 
+// Testing methods
+// 
 
 async function testCallNear (neaerApi) {
   await nearApi.contract.addMessage({text: 'test from bridge - ' + Math.random()});
 }
 
-async function bridge () {
+async function testReadPhala (phalaApi) {
+  const nonce = await phalaApi.api.query.system.accountNonce(ALICE);
+  console.log('sub nonce:', nonce);
+}
+
+async function testCallPhala (phalaApi) {
+  const txhash = await phalaApi.api.tx.balances.transfer(BOB, new bn('10000'))
+    .signAndSend(phalaApi.alicePair);
+  console.log('send tx:', txhash);
+}
+
+//
+// The main bridge logic
+//
+
+async function bridge (phalaApi, nearApi) {
   // loop {
   //   const ev = await near:get-first-unprocessed-event()
   //   if (!ev) {
@@ -59,7 +95,10 @@ async function bridge () {
 async function main () {
   const phalaApi = await initPhala();
   const nearApi = await initNear();
-  await bridge();
+
+  // await testCallPhala(phalaApi);
+  await bridge(phalaApi, nearApi);
+  console.log('leaving main()');
 }
 
 main();
