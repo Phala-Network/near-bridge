@@ -76,28 +76,56 @@ async function testCallPhala (phalaApi) {
 // The main bridge logic
 //
 
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function nearGetFistUnprocessedEvent(nearApi, lastProcessed) {
+  return { eid: -1, payload: 'unimplemented' };
+}
+
+function phalaEventFromNear (ev) {
+  return 'unimplemented';
+}
+
+async function phalaPushCommand(phalaApi, command) {
+  return 'unimplemented';
+}
+
+async function nearSetProcessed(nearApi, eid) {
+  return 'unimplemented';
+}
+
 async function bridge (phalaApi, nearApi) {
-  // loop {
-  //   const ev = await near:get-first-unprocessed-event()
-  //   if (!ev) {
-  //     sleep(...)
-  //   }
-  //   const subev = subevFromNear(ev)
-  //   const result = await substrate:send-tx(subev)
-  //   if (result is not success) {
-  //     log(...)
-  //     continue
-  //   }
-  //   await near:set-state(ev.id, PROCESSED)
-  // }
+  while (true) {
+    const ev = await nearGetFistUnprocessedEvent(nearApi);
+    if (!ev) {
+      await sleep(200);
+    }
+    console.log('Got unprocessed event:', ev);
+
+    const phalaEv = phalaEventFromNear(ev);
+    console.log('Relaying to Phala Network:', phalaEv);
+
+    const result = await phalaPushCommand(phalaApi, phalaEv);
+    if (!result) {
+      console.log('Phala transaction failed. Retry...');
+      continue
+    }
+
+    console.log('Setting event processed:', ev.eid);
+    await nearSetProcessed(nearApi, ev.eid);
+
+    await sleep(500);
+  }
 }
 
 async function main () {
   const phalaApi = await initPhala();
   const nearApi = await initNear();
 
-  // await testCallPhala(phalaApi);
   await bridge(phalaApi, nearApi);
+
   console.log('leaving main()');
 }
 
