@@ -80,27 +80,60 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function nearGetFistUnprocessedEvent(nearApi, lastProcessed) {
-  return { eid: -1, payload: 'unimplemented' };
+async function nearGetFistUnprocessedEvent(nearApi, start) {
+  const LIMIT = 10;
+  while (true) {
+    const events = await nearApi.contract.getEvents({start, length: LIMIT});
+    if (!events || events.length == 0) {
+      // no event
+      return null;
+    }
+
+    for (let i = 0; i < events.length; i++) {
+      // return the first unprocessed egress event we met
+      if (events[i].state == 0) {
+        return events[i];
+      }
+    }
+    start += LIMIT;
+  }
 }
 
 function phalaEventFromNear (ev) {
-  return 'unimplemented';
+  return ev;
 }
 
-async function phalaPushCommand(phalaApi, command) {
-  return 'unimplemented';
+async function phalaPushCommand(phalaApi, ev) {
+  // -- ev --
+  // eid: u32;
+  // origin: string;
+  // contract: u32;
+  // payload: string;
+  // state: u8;
+  const { contract, payload } = ev;
+  // TODO: handle different origin
+  const txid = await phalaApi.api.tx.execution.pushCommand(contract, payload)
+      .signAndSend(phalaApi.alicePair);
+  return txid;
 }
 
 async function nearSetProcessed(nearApi, eid) {
-  return 'unimplemented';
+  await nearApi.contract.setState({eid, state: 1});  // 1 - processed
 }
 
-async function bridge (phalaApi, nearApi) {
+async function bridge () {
+  const phalaApi = await initPhala();
+  console.log('Connected to Phala');
+
+  const nearApi = await initNear();
+  console.log('Connected to Near');
+
+  let startEid = 0;
   while (true) {
-    const ev = await nearGetFistUnprocessedEvent(nearApi);
+    const ev = await nearGetFistUnprocessedEvent(nearApi, startEid);
     if (!ev) {
       await sleep(200);
+      continue;
     }
     console.log('Got unprocessed event:', ev);
 
@@ -110,23 +143,26 @@ async function bridge (phalaApi, nearApi) {
     const result = await phalaPushCommand(phalaApi, phalaEv);
     if (!result) {
       console.log('Phala transaction failed. Retry...');
-      continue
+      continue;
     }
 
     console.log('Setting event processed:', ev.eid);
     await nearSetProcessed(nearApi, ev.eid);
+    startEid = ev.eid + 1;
 
     await sleep(500);
   }
 }
 
 async function main () {
-  const phalaApi = await initPhala();
-  const nearApi = await initNear();
-
-  await bridge(phalaApi, nearApi);
-
-  console.log('leaving main()');
+  while (true) {
+    try {
+      await bridge();
+    } catch (err) {
+      console.error('Bridge error, pause for 5s:', err);
+      await sleep(5000);
+    }
+  }
 }
 
 main();
