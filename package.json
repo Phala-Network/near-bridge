@@ -13,7 +13,8 @@
   },
   "dependencies": {
     "near-bindgen-as": "^1.1.1",
-    "near-runtime-ts": "^0.5.1"
+    "near-runtime-ts": "^0.5.1",
+    "nearlib": "^0.19.2"
   },
   "devDependencies": {
     "assemblyscript": "^0.8.1",
