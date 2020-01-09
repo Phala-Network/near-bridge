@@ -15,11 +15,6 @@ describe('Guestbook', function () {
   });
 
   describe('Guestbook', function () {
-    it('returns 0 messages in initial empty states', async function () {
-      const messages = await contract.getMessages({});
-      expect(messages.length).toBe(0);
-    });
-
     it('has correct state after pushing a command', async function () {
       jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;
       const eid = await contract.pushCommand({
